@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "esp_timer.h": "c",
+        "*.inc": "c",
+        "esp_attr.h": "c",
+        "fstream": "c",
+        "istream": "c",
+        "ostream": "c",
+        "sstream": "c",
+        "streambuf": "c",
+        "esp_tls_crypto.h": "c"
+    }
+}
