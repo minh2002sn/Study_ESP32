@@ -8,6 +8,11 @@
         "ostream": "c",
         "sstream": "c",
         "streambuf": "c",
-        "esp_tls_crypto.h": "c"
+        "esp_tls_crypto.h": "c",
+        "event_groups.h": "c",
+        "esp_event.h": "c",
+        "gpio.h": "c",
+        "inttypes.h": "c",
+        "timers.h": "c"
     }
 }

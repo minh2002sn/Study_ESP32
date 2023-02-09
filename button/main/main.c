@@ -8,37 +8,48 @@
 */
 #include <stdio.h>
 #include "button.h"
+#include "output_driver.h"
 #include <driver/gpio.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
-#define GPIO_BUTTON_PIN     5
-#define GPIO_LED_PIN        2
+#define GPIO_BUTTON_PIN     9
+#define GPIO_RGB_LED_PIN_1  3
+#define GPIO_RGB_LED_PIN_2  4
+#define GPIO_RGB_LED_PIN_3  5
+#define GPIO_OUTPUT_PIN     18
 
 static void BUTTON_Pressing_Handle(int pin)
 {
     if(pin == GPIO_BUTTON_PIN)
     {
-        gpio_set_level(GPIO_LED_PIN, 1);
+        // gpio_set_level(GPIO_LED_PIN, 1);
+        printf("Pressing\n");
     }
 }
 
 static void BUTTON_Releasing_Handle(int pin)
 {
+    static uint8_t counter = 0;
     if(pin == GPIO_BUTTON_PIN)
     {
-        gpio_set_level(GPIO_LED_PIN, 0);
+        // gpio_set_level(GPIO_LED_PIN, 0);
+        printf("Releasing\n");
+        counter++;
+        if(counter == 8) counter = 0;
+        OUTPUT_DRIVER_Set_State(GPIO_RGB_LED_PIN_1, counter & 1);
+        OUTPUT_DRIVER_Set_State(GPIO_RGB_LED_PIN_2, counter & 2);
+        OUTPUT_DRIVER_Set_State(GPIO_RGB_LED_PIN_3, counter & 4);
     }
 }
 
 void app_main(void)
 {
-    gpio_config_t io_config;
-    io_config.mode = GPIO_MODE_OUTPUT;
-    io_config.intr_type = GPIO_INTR_DISABLE;
-    io_config.pin_bit_mask = 1U << GPIO_LED_PIN;
-    io_config.pull_down_en = GPIO_PULLDOWN_DISABLE;
-    io_config.pull_up_en = GPIO_PULLUP_DISABLE;
-    gpio_config(&io_config);
+    OUTPUT_DRIVER_Init(GPIO_RGB_LED_PIN_1);
+    OUTPUT_DRIVER_Init(GPIO_RGB_LED_PIN_2);
+    OUTPUT_DRIVER_Init(GPIO_RGB_LED_PIN_3);
 
-    BUTTON_Init(GPIO_BUTTON_PIN);
     BUTTON_Set_Callback_Function(BUTTON_Pressing_Handle, BUTTON_Releasing_Handle);
+    BUTTON_Init(GPIO_BUTTON_PIN);
+
 }
