@@ -11,5 +11,6 @@ typedef enum
 } ExtiEdge_t
 
 void exti_driver_init(uint32_t pin, ExtiEdge_t edge);
+void exti_driver_callback(uint32_t pin);
 
 #endif

@@ -23,7 +23,6 @@ static void BUTTON_Pressing_Handle(int pin)
 {
     if(pin == GPIO_BUTTON_PIN)
     {
-        // gpio_set_level(GPIO_LED_PIN, 1);
         printf("Pressing\n");
     }
 }
@@ -33,7 +32,6 @@ static void BUTTON_Releasing_Handle(int pin)
     static uint8_t counter = 0;
     if(pin == GPIO_BUTTON_PIN)
     {
-        // gpio_set_level(GPIO_LED_PIN, 0);
         printf("Releasing\n");
         counter++;
         if(counter == 8) counter = 0;

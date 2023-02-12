@@ -1,0 +1,36 @@
+Tutorial to download ch341 driver on Ubuntu
+
+1. Download ch34x driver.
+   Link: https://github.com/juliagoda/CH341SER?fbclid=IwAR3_keYY8QiuR9jLQEK2dHigFWPIBWI7q7jwgfM0DIvFSowd9pGxQFiKBLg#tutorial-on-ubuntu
+
+2. Open terminal.
+   Ctrl + Alt + T
+
+3. Uninstall brltty.
+   Run this command: sudo apt autoremove brltty
+
+4. Goto the directory of ch34x driver's source code.
+
+5. Compile
+   Run this command: make
+
+6. Sign the module (needed in systems with secure boot enabled).
+   Run this command: kmodsign sha512 /var/lib/shim-signed/mok/MOK.priv /var/lib/shim-signed/mok/MOK.der ./ch34x.ko
+
+7. Load module.
+   Run this command: sudo make load
+
+
+**************************************** EC OH EC **************************************** 
+   If error occur because of being already installed ch34x driver
+
+1. Show what modules are currently installed
+   Run this command: lsmod | grep ch34
+
+2. Uninstall all modules.
+   Make sure to adjust the module_name to your modules's name and run this command: sudo rmmod module_name
+   Repeat until uninstall all modules.
+
+3. Load new module.
+   Run this command: sudo make load
+

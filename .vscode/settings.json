@@ -13,6 +13,9 @@
         "esp_event.h": "c",
         "gpio.h": "c",
         "inttypes.h": "c",
-        "timers.h": "c"
+        "timers.h": "c",
+        "freertos.h": "c",
+        "queue.h": "c",
+        "task.h": "c"
     }
 }

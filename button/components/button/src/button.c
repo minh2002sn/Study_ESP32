@@ -20,6 +20,11 @@
 #define BUTTON_SHORT_PRESSING_BIT   (1 << 2)
 #define BUTTON_LONG_PRESSING_BIT    (1 << 3)
 
+static BUTTON_CALLBACK_FUNCTION_t BUTTON_PressingCallback = NULL;
+static BUTTON_CALLBACK_FUNCTION_t BUTTON_ReleasingCallback = NULL;
+static BUTTON_CALLBACK_FUNCTION_t BUTTON_ShortPressingCallback = NULL;
+static BUTTON_CALLBACK_FUNCTION_t BUTTON_LongPressingCallback = NULL;
+
 static QueueHandle_t        button_event_queue = NULL;
 static TimerHandle_t        button_soft_timer = NULL;
 static TaskHandle_t         button_debouncing_task = NULL;
@@ -28,46 +33,46 @@ static EventGroupHandle_t   button_executing_event_group = NULL;
 static uint8_t              is_defined = 0;
 static ButtonHandle_t       *current_button = NULL;
 
-static void IRAM_ATTR GPIO_ISR_Handler(void* arg)
-{
-    xQueueSendFromISR(button_event_queue, (uint32_t *)&arg, NULL);
-}
+// static void IRAM_ATTR GPIO_ISR_Handler(void* arg)
+// {
+//     xQueueSendFromISR(button_event_queue, (uint32_t *)&arg, NULL);
+// }
 
 static void button_debouncing_task_handler(void* arg)
 {
-    uint32_t io_pin_num;
-    while(1)
-    {
-        if(xQueueReceive(button_event_queue, &io_pin_num, portMAX_DELAY))
-        {
-            // printf("GPIO[%"PRIu32"] intr, val: %d\n", io_pin_num, gpio_get_level(io_pin_num));
-            if(io_pin_num == gpio_pin)
-            {
-                if(GET_TICK - deboucing_timer > 20000)
-                {
-                    continue;
-                }
-                deboucing_timer = GET_TICK;
+    // uint32_t io_pin_num;
+    // while(1)
+    // {
+    //     if(xQueueReceive(button_event_queue, &io_pin_num, portMAX_DELAY))
+    //     {
+    //         // printf("GPIO[%"PRIu32"] intr, val: %d\n", io_pin_num, gpio_get_level(io_pin_num));
+    //         if(io_pin_num == gpio_pin)
+    //         {
+    //             if(GET_TICK - deboucing_timer > 20000)
+    //             {
+    //                 continue;
+    //             }
+    //             deboucing_timer = GET_TICK;
 
-                if(gpio_get_level(gpio_pin) == 0)
-                {
-                    is_pressing = 1;
-                    pressing_timer = GET_TICK;
-                    if(BUTTON_PressingCallback != NULL)
-                        BUTTON_PressingCallback(gpio_pin);
-                }
-                else
-                {
-                    if(BUTTON_ReleasingCallback != NULL)
-                        BUTTON_ReleasingCallback(gpio_pin);
-                    if(GET_TICK - pressing_timer < PRESSING_TIMEOUT)
-                    {
+    //             if(gpio_get_level(gpio_pin) == 0)
+    //             {
+    //                 is_pressing = 1;
+    //                 pressing_timer = GET_TICK;
+    //                 if(BUTTON_PressingCallback != NULL)
+    //                     BUTTON_PressingCallback(gpio_pin);
+    //             }
+    //             else
+    //             {
+    //                 if(BUTTON_ReleasingCallback != NULL)
+    //                     BUTTON_ReleasingCallback(gpio_pin);
+    //                 if(GET_TICK - pressing_timer < PRESSING_TIMEOUT)
+    //                 {
 
-                    }
-                }
-            }
-        }
-    }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 static void soft_timer_callback()
@@ -83,7 +88,7 @@ static void button_executing_task_handler(void* arg)
     }
 }
 
-void BUTTON_Init(int pin)
+void BUTTON_Init(ButtonHandle_t *button, uint32_t pin)
 {
     if(is_defined == 0)
     {
@@ -94,24 +99,56 @@ void BUTTON_Init(int pin)
         button_executing_event_group = xEventGroupCreate();
         is_defined = 1;
     }
-    gpio_pin = pin;
+    // gpio_pin = pin;
 
-    gpio_config_t io_conf = 
-    {
-        .pin_bit_mask   = (1ULL << pin),
-        .mode           = GPIO_MODE_INPUT,
-        .pull_up_en     = GPIO_PULLUP_ENABLE,
-        .pull_down_en   = GPIO_PULLDOWN_DISABLE,
-        .intr_type      = GPIO_INTR_ANYEDGE,
-    };
+    // gpio_config_t io_conf = 
+    // {
+    //     .pin_bit_mask   = (1ULL << pin),
+    //     .mode           = GPIO_MODE_INPUT,
+    //     .pull_up_en     = GPIO_PULLUP_ENABLE,
+    //     .pull_down_en   = GPIO_PULLDOWN_DISABLE,
+    //     .intr_type      = GPIO_INTR_ANYEDGE,
+    // };
 
-    gpio_config(&io_conf);    
-    gpio_install_isr_service(0);
-    gpio_isr_handler_add(pin, GPIO_ISR_Handler, (void*) pin);    
+    // gpio_config(&io_conf);    
+    // gpio_install_isr_service(0);
+    // gpio_isr_handler_add(pin, GPIO_ISR_Handler, (void*) pin);
 }
 
 void BUTTON_Set_Callback_Function(void *PressingCallback, void *ReleasingCallback)
 {
-    BUTTON_PressingCallback = PressingCallback;
-    BUTTON_ReleasingCallback = ReleasingCallback;
+    // BUTTON_PressingCallback = PressingCallback;
+    // BUTTON_ReleasingCallback = ReleasingCallback;
+}
+
+void BUTTON_EXTI_Handle(ButtonHandle_t *button, uint32_t pin)
+{
+    if(button->gpio_pin == pin)
+    {
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+        if(GET_TICK - button->debouncing_timer < 20)
+        {
+            return;
+        }
+        button->debouncing_timer = GET_TICK;
+
+        if(gpio_get_level(button->gpio_pin) == 0)
+        {
+            button->pressing_timer = GET_TICK;
+            xHigherPriorityTaskWoken = pdFALSE;
+            xTimerStartFromISR(button_soft_timer, xHigherPriorityTaskWoken);
+            xHigherPriorityTaskWoken = pdFALSE;
+            xEventGroupSetBitsFromISR(button_executing_event_group, BUTTON_PRESSING_BIT, xHigherPriorityTaskWoken);
+        }
+        else
+        {
+            xHigherPriorityTaskWoken = pdFALSE;
+            xEventGroupSetBitsFromISR(button_executing_event_group, BUTTON_RELEASING_BIT, xHigherPriorityTaskWoken);
+            if(GET_TICK - button->pressing_timer < PRESSING_TIMEOUT)
+            {
+                xHigherPriorityTaskWoken = pdFALSE;
+                xEventGroupSetBitsFromISR(button_executing_event_group, BUTTON_SHORT_PRESSING_BIT, xHigherPriorityTaskWoken);
+            }
+        }
+    }
 }
