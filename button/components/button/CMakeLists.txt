@@ -1,6 +1,6 @@
-set(component_srcs "src/button.c")
+set(component_srcs "button.c")
 
 idf_component_register(SRCS "${component_srcs}"
-                       INCLUDE_DIRS "inc"
-                       PRIV_REQUIRES "driver" "esp_timer"
+                       INCLUDE_DIRS "."
+                       PRIV_REQUIRES "driver" "esp_timer" "freertos" "subdriver_exti"
                        )

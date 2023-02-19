@@ -1,0 +1,1 @@
+When create a task with the while(1) loop just wait Event loop bit, set the priority as tskIDLE_PRIORITY

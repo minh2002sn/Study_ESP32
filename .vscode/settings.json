@@ -16,6 +16,11 @@
         "timers.h": "c",
         "freertos.h": "c",
         "queue.h": "c",
-        "task.h": "c"
+        "task.h": "c",
+        "exti_driver.h": "c",
+        "button.h": "c",
+        "subdri_gpio.h": "c",
+        "subdriver_exti.h": "c",
+        "cmath": "c"
     }
 }
