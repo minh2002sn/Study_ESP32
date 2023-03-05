@@ -2,6 +2,8 @@
 <head>
   <title>ESP-NOW DASHBOARD</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+  <link rel="icon" href="data:,">
   <style>
     html {font-family: Arial; display: inline-block; text-align: center;}
     h1 {  font-size: 2rem;}
@@ -106,19 +108,6 @@
     <p>Value: <span id="demo"></p>
   </div>
 
-  <div class="container">
-    <label><b>SSID</b></label>
-    <input type="text" placeholder="Enter SSID" id="ssid">
-
-    <label><b>Password</b></label>
-    <input type="password" placeholder="Enter Password" id="pass">
-
-    <button onClick="SubmitButtonHandle()">Send SSID and Password</button>
-  </div>
-
-  <iframe width="450" height="260" style="border: 1px solid #cccccc;" src="https://thingspeak.com/channels/1837455/charts/1?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15"></iframe>
-  <iframe width="450" height="260" style="border: 1px solid #cccccc;" src="https://thingspeak.com/channels/1837455/charts/2?bgcolor=%23ffffff&color=%23d62020&dynamic=true&results=60&type=line&update=15"></iframe>
-
   <script>
 
     var xhttp1 = new XMLHttpRequest();
@@ -174,19 +163,7 @@
       xhttp2.send(this.value);
     }
 
-    function SubmitButtonHandle()
-    {
-      
-      var ssid = document.getElementById("ssid").value;
-      var pass = document.getElementById("pass").value;
-      if(ssid != "" && pass != "")
-      {
-  //      var json = "{\"SSID:\"" + ssid + "\",\"PASSWORD\":\"" + pass + "\"}";
-        var json = ssid + "\n" + pass + "\0";
-        xhttp1.open("POST", "/wifi_info", true);
-        xhttp1.send(json);
-      }
-    }
+
 
   </script>
 </body>

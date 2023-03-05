@@ -21,6 +21,8 @@
         "button.h": "c",
         "subdri_gpio.h": "c",
         "subdriver_exti.h": "c",
-        "cmath": "c"
+        "cmath": "c",
+        "esp_http_server.h": "c",
+        "esp_eth.h": "c"
     }
 }

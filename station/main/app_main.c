@@ -20,14 +20,16 @@
 #include "lwip/sys.h"
 
 #include "http_server_app.h"
+#include "subdriver_gpio.h"
+#include "subdriver_pwm.h"
 
 /* The examples use WiFi configuration that you can set via project configuration menu
 
    If you'd rather not, just change the below entries to strings with
    the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
 */
-#define EXAMPLE_ESP_WIFI_SSID      "PIFLab"
-#define EXAMPLE_ESP_WIFI_PASS      "tamsotam"
+#define EXAMPLE_ESP_WIFI_SSID      "DepThiVo"
+#define EXAMPLE_ESP_WIFI_PASS      "daucatmoi"
 #define EXAMPLE_ESP_MAXIMUM_RETRY  5
 
 #if CONFIG_ESP_WIFI_AUTH_OPEN
@@ -61,6 +63,12 @@ static const char *TAG = "wifi station";
 
 static int s_retry_num = 0;
 
+#define GPIO_BUTTON_PIN         9
+#define GPIO_RGB_RED_PIN        3
+#define GPIO_RGB_GREEN_PIN      4
+#define GPIO_RGB_BLUE_PIN       5
+#define GPIO_ORANGE_LED         18
+#define GPIO_WHITE_LED          19
 
 static void event_handler(void* arg, esp_event_base_t event_base,
                                 int32_t event_id, void* event_data)
@@ -116,7 +124,7 @@ void wifi_init_sta(void)
             /* Authmode threshold resets to WPA2 as default if password matches WPA2 standards (pasword len => 8).
              * If you want to connect the device to deprecated WEP/WPA networks, Please set the threshold value
              * to WIFI_AUTH_WEP/WIFI_AUTH_WPA_PSK and set the password with length and format matching to
-	     * WIFI_AUTH_WEP/WIFI_AUTH_WPA_PSK standards.
+	         * WIFI_AUTH_WEP/WIFI_AUTH_WPA_PSK standards.
              */
             .threshold.authmode = ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD,
             .sae_pwe_h2e = WPA3_SAE_PWE_BOTH,
@@ -149,6 +157,75 @@ void wifi_init_sta(void)
     }
 }
 
+void web_switch_callback(int state)
+{
+    SUBDRIVER_GPIO_SetState(GPIO_ORANGE_LED, state);
+}
+
+void web_slider_callbaclk(int duty)
+{
+    SUBDRIVER_PWM_SetValue(GPIO_RGB_RED_PIN, duty);
+}
+
+void wifi_info_callback(char *buf, uint8_t buf_len)
+{
+    EventGroupHandle_t s_wifi_event_group = xEventGroupCreate();
+    // HTTP_SERVER_Stop();
+
+    char *ssid, *pass;
+    if(buf != NULL)
+    {
+        ssid = strtok(buf, "\n");
+        pass = strtok(NULL, "\n");
+    }
+    else
+        return;
+
+    printf("SSID: %s\nPass: %s\n", ssid, pass);
+
+    esp_wifi_disconnect();
+    esp_wifi_stop();
+
+    wifi_config_t wifi_config = {
+        .sta = {
+            /* Authmode threshold resets to WPA2 as default if password matches WPA2 standards (pasword len => 8).
+             * If you want to connect the device to deprecated WEP/WPA networks, Please set the threshold value
+             * to WIFI_AUTH_WEP/WIFI_AUTH_WPA_PSK and set the password with length and format matching to
+	         * WIFI_AUTH_WEP/WIFI_AUTH_WPA_PSK standards.
+             */
+            .threshold.authmode = ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD,
+            .sae_pwe_h2e = WPA3_SAE_PWE_BOTH,
+            .pmf_cfg = 
+            {
+                .capable = true,
+                .required = false
+            }
+        },
+    };
+
+    strcpy((char *)wifi_config.sta.ssid, ssid);
+    strcpy((char *)wifi_config.sta.password, pass);
+
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
+    ESP_ERROR_CHECK(esp_wifi_start());
+
+    printf("\nWiFi starting...\n");
+    // /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
+    //  * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
+    EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
+            WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
+            pdFALSE,
+            pdFALSE,    
+            portMAX_DELAY);
+
+    printf("\nWiFi connected...\n");
+    HTTP_SERVER_Start();
+
+}
+
 void app_main(void)
 {
     //Initialize NVS
@@ -159,9 +236,18 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(ret);
 
+    SUBDRIVER_GPIO_OutputInit(GPIO_ORANGE_LED);
+    SUBDRIVER_GPIO_OutputInit(GPIO_WHITE_LED);
+    switch_set_callback(web_switch_callback);
+
+    SUBDRIVER_PWM_Init(GPIO_RGB_RED_PIN);
+    slider_set_callback(web_slider_callbaclk);
+
+    wifi_send_set_callback(wifi_info_callback);
+
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
     wifi_init_sta();
 
-    start_webserver();
+    HTTP_SERVER_Start();
 
 }

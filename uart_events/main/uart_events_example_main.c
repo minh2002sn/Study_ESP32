@@ -11,8 +11,11 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "freertos/event_groups.h"
 #include "driver/uart.h"
 #include "esp_log.h"
+
+#include "subdriver_gpio.h"
 
 static const char *TAG = "uart_events";
 
@@ -30,11 +33,74 @@ static const char *TAG = "uart_events";
  */
 
 #define EX_UART_NUM UART_NUM_0
-#define PATTERN_CHR_NUM    (3)         /*!< Set the number of consecutive and identical characters received by receiver which defines a UART pattern*/
+#define PATTERN_CHR_NUM    (1)         /*!< Set the number of consecutive and identical characters received by receiver which defines a UART pattern*/
 
 #define BUF_SIZE (1024)
 #define RD_BUF_SIZE (BUF_SIZE)
 static QueueHandle_t uart0_queue;
+
+#define GPIO_BUTTON_PIN         9
+#define GPIO_RGB_RED_PIN        3
+#define GPIO_RGB_GREEN_PIN      4
+#define GPIO_RGB_BLUE_PIN       5
+#define GPIO_ORANGE_LED         18
+#define GPIO_WHITE_LED          19
+
+static EventGroupHandle_t cmd_handle_event_group;
+#define LED_WHITE_ON_BIT        (1 << 0)
+#define LED_WHITE_OFF_BIT       (1 << 1)
+#define LED_ORANGE_ON_BIT       (1 << 2)
+#define LED_ORANGE_OFF_BIT      (1 << 3)
+
+void cmd_handle_task()
+{
+    while(1)
+    {
+        EventBits_t uxBits = xEventGroupWaitBits(cmd_handle_event_group, 0x0FFF, pdTRUE, pdFALSE, portMAX_DELAY);
+        if(uxBits & LED_WHITE_ON_BIT)
+        {
+            SUBDRIVER_GPIO_SetState(GPIO_WHITE_LED, 1);
+        }
+        if(uxBits & LED_WHITE_OFF_BIT)
+        {
+            SUBDRIVER_GPIO_SetState(GPIO_WHITE_LED, 0);
+        }
+        if(uxBits & LED_ORANGE_ON_BIT)
+        {
+            SUBDRIVER_GPIO_SetState(GPIO_ORANGE_LED, 1);
+        }
+        if(uxBits & LED_ORANGE_OFF_BIT)
+        {
+            SUBDRIVER_GPIO_SetState(GPIO_ORANGE_LED, 0);
+        }
+    }
+}
+
+// static void commandline_handle(char *arg[10], uint8_t num_arg)
+// {
+//     if(strstr(arg[0], "LED_WHITE"))
+//     {
+//         if(strstr(arg[1], "ON"))
+//         {
+//             xEventGroupSetBits(cmd_handle_event_group, LED_WHITE_ON_BIT);
+//         }
+//         else if(strstr(arg[1], "OFF"))
+//         {
+//             xEventGroupSetBits(cmd_handle_event_group, LED_WHITE_OFF_BIT);
+//         }
+//     }
+//     else if(strstr(arg[0], "LED_ORANGE"))
+//     {
+//         if(strstr(arg[1], "ON"))
+//         {
+//             xEventGroupSetBits(cmd_handle_event_group, LED_ORANGE_ON_BIT);
+//         }
+//         else if(strstr(arg[1], "OFF"))
+//         {
+//             xEventGroupSetBits(cmd_handle_event_group, LED_ORANGE_OFF_BIT);
+//         }
+//     }
+// }
 
 static void uart_event_task(void *pvParameters)
 {
@@ -52,10 +118,10 @@ static void uart_event_task(void *pvParameters)
                 other types of events. If we take too much time on data event, the queue might
                 be full.*/
                 case UART_DATA:
-                    ESP_LOGI(TAG, "[UART DATA]: %d", event.size);
-                    uart_read_bytes(EX_UART_NUM, dtmp, event.size, portMAX_DELAY);
-                    ESP_LOGI(TAG, "[DATA EVT]:");
-                    uart_write_bytes(EX_UART_NUM, (const char*) dtmp, event.size);
+                    // ESP_LOGI(TAG, "[UART DATA]: %d", event.size);
+                    // uart_read_bytes(EX_UART_NUM, dtmp, event.size, portMAX_DELAY);
+                    // ESP_LOGI(TAG, "[DATA EVT]:");
+                    // uart_write_bytes(EX_UART_NUM, (const char*) dtmp, event.size);
                     break;
                 //Event of HW FIFO overflow detected
                 case UART_FIFO_OVF:
@@ -98,11 +164,43 @@ static void uart_event_task(void *pvParameters)
                         uart_flush_input(EX_UART_NUM);
                     } else {
                         uart_read_bytes(EX_UART_NUM, dtmp, pos, 100 / portTICK_PERIOD_MS);
-                        uint8_t pat[PATTERN_CHR_NUM + 1];
-                        memset(pat, 0, sizeof(pat));
-                        uart_read_bytes(EX_UART_NUM, pat, PATTERN_CHR_NUM, 100 / portTICK_PERIOD_MS);
-                        ESP_LOGI(TAG, "read data: %s", dtmp);
-                        ESP_LOGI(TAG, "read pat : %s", pat);
+                        // uint8_t pat[PATTERN_CHR_NUM + 1];
+                        // memset(pat, 0, sizeof(pat));
+                        // uart_read_bytes(EX_UART_NUM, pat, PATTERN_CHR_NUM, 100 / portTICK_PERIOD_MS);
+                        // ESP_LOGI(TAG, "read data: %s", dtmp);
+                        // ESP_LOGI(TAG, "read pat : %d", pat[0]);
+                        char *arg[10];
+                        uint8_t num_arg = 0;
+                        char *token = strtok((char *)dtmp, " ");
+                        arg[num_arg++] = token;
+                        while(token != NULL)
+                        {
+                            token = strtok(NULL, " ");
+                            arg[num_arg++] = token;
+                        }
+                        // commandline_handle(arg, num_arg);
+                        if(strstr(arg[0], "LED_WHITE"))
+                        {
+                            if(strstr(arg[1], "ON"))
+                            {
+                                xEventGroupSetBits(cmd_handle_event_group, LED_WHITE_ON_BIT);
+                            }
+                            else if(strstr(arg[1], "OFF"))
+                            {
+                                xEventGroupSetBits(cmd_handle_event_group, LED_WHITE_OFF_BIT);
+                            }
+                        }
+                        else if(strstr(arg[0], "LED_ORANGE"))
+                        {
+                            if(strstr(arg[1], "ON"))
+                            {
+                                xEventGroupSetBits(cmd_handle_event_group, LED_ORANGE_ON_BIT);
+                            }
+                            else if(strstr(arg[1], "OFF"))
+                            {
+                                xEventGroupSetBits(cmd_handle_event_group, LED_ORANGE_OFF_BIT);
+                            }
+                        }
                     }
                     break;
                 //Others
@@ -141,10 +239,16 @@ void app_main(void)
     uart_set_pin(EX_UART_NUM, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
 
     //Set uart pattern detect function.
-    uart_enable_pattern_det_baud_intr(EX_UART_NUM, '+', PATTERN_CHR_NUM, 9, 0, 0);
+    uart_enable_pattern_det_baud_intr(EX_UART_NUM, '\n', PATTERN_CHR_NUM, 9, 0, 0);
     //Reset the pattern queue length to record at most 20 pattern positions.
-    uart_pattern_queue_reset(EX_UART_NUM, 20);
+    uart_pattern_queue_reset(EX_UART_NUM, 20);  
 
     //Create a task to handler UART event from ISR
-    xTaskCreate(uart_event_task, "uart_event_task", 2048, NULL, 12, NULL);
+    xTaskCreate(uart_event_task, "uart_event_task", 4096, NULL, 12, NULL);
+
+    SUBDRIVER_GPIO_OutputInit(GPIO_ORANGE_LED);
+    SUBDRIVER_GPIO_OutputInit(GPIO_WHITE_LED);
+    cmd_handle_event_group = xEventGroupCreate();
+    xTaskCreate(cmd_handle_task, "cmd_handle_task", 2048, NULL, 13, NULL);
+
 }
