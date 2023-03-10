@@ -6,7 +6,7 @@
 
 typedef void (*switch_callback_function_t)(int state);
 typedef void (*slider_callback_function_t)(int duty);
-typedef void (*wifi_info_callback_function_t)(char *buf, uint8_t buf_len);
+typedef void (*wifi_info_callback_function_t)(char *ssid, char *pass);
 
 // typedef struct
 // {

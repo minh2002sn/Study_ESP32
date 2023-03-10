@@ -18,10 +18,13 @@ httpd_handle_t server = NULL;
 
 extern const unsigned char index_html_start[] asm("_binary_web_html_start");
 extern const unsigned char index_html_end[] asm("_binary_web_html_end");
+extern const unsigned char index_wifi_html_start[] asm("_binary_setting_wifi_web_html_start");
+extern const unsigned char index_wifi_html_end[] asm("_binary_setting_wifi_web_html_end");
 
-slider_callback_function_t slider_callback = NULL;
-switch_callback_function_t switch_callback = NULL;
-wifi_info_callback_function_t wifi_info_function = NULL;
+static slider_callback_function_t slider_callback = NULL;
+static switch_callback_function_t switch_callback = NULL;
+static wifi_info_callback_function_t wifi_info_function = NULL;
+static uint8_t is_http_server_started = 0;
 
 /* An HTTP GET handler */
 static esp_err_t web_get_handler(httpd_req_t *req)
@@ -38,6 +41,26 @@ static const httpd_uri_t web = {
     .uri       = "/",
     .method    = HTTP_GET,
     .handler   = web_get_handler,
+    /* Let's pass response string in user
+     * context to demonstrate it's usage */
+    .user_ctx  = NULL
+};
+
+/* An HTTP GET handler */
+static esp_err_t setting_wifi_web_get_handler(httpd_req_t *req)
+{
+    /* Send response with custom headers and body set as the
+     * string passed in user context*/
+    httpd_resp_set_type(req, "text/html");
+    httpd_resp_send(req, (const char *)index_wifi_html_start, index_wifi_html_end - index_wifi_html_start);
+
+    return ESP_OK;
+}
+
+static const httpd_uri_t setting_wifi_web = {
+    .uri       = "/setting_wifi",
+    .method    = HTTP_GET,
+    .handler   = setting_wifi_web_get_handler,
     /* Let's pass response string in user
      * context to demonstrate it's usage */
     .user_ctx  = NULL
@@ -132,8 +155,19 @@ static esp_err_t send_wifi_info_button_post_handler(httpd_req_t *req)
 
     /* Read the data for the request */
     httpd_req_recv(req, buf, req->content_len);
+    char *ssid, *pass;
+    if(buf != NULL)
+    {
+        ssid = strtok(buf, "\n");
+        pass = strtok(NULL, "\n");
+    }
+    else
+    {
+        return ESP_FAIL;
+    }
+
     if(wifi_info_function != NULL)
-        wifi_info_function(buf, req->content_len);
+        wifi_info_function(ssid, pass);
 
     // End response
     httpd_resp_send_chunk(req, NULL, 0);
@@ -148,7 +182,10 @@ static const httpd_uri_t send_wifi_info_button = {
 };
 
 void HTTP_SERVER_Start(void)
-{   
+{
+    if(is_http_server_started) return;
+    is_http_server_started = 1;
+    
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.lru_purge_enable = true;
 
@@ -163,6 +200,7 @@ void HTTP_SERVER_Start(void)
         httpd_register_uri_handler(server, &switch_1);
         httpd_register_uri_handler(server, &slider);
         httpd_register_uri_handler(server, &send_wifi_info_button);
+        httpd_register_uri_handler(server, &setting_wifi_web);
         httpd_register_err_handler(server, HTTPD_404_NOT_FOUND, http_404_error_handler);
     }
     else
@@ -175,6 +213,7 @@ void HTTP_SERVER_Stop(void)
 {
     // Stop the httpd server
     httpd_stop(server);
+    is_http_server_started = 0;
 }
 
 void switch_set_callback(void (*callback_function))
