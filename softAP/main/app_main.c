@@ -61,8 +61,7 @@ void wifi_init_softap(void)
 
     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
                                                         ESP_EVENT_ANY_ID,
-                                                        &wifi_event_
-andler,
+                                                        &wifi_event_handler,
                                                         NULL,
                                                         NULL));
 

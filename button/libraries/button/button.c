@@ -77,7 +77,7 @@ static void button_executing_task_handler(void* arg)
                                                     BUTTON_PRESSING_BIT | BUTTON_RELEASING_BIT | BUTTON_SHORT_PRESSING_BIT,
                                                     pdTRUE,
                                                     pdFALSE,
-                                                    portMAX_DELAY);
+                                                    đồ);
 
         if(uxBits & BUTTON_PRESSING_BIT)
         {

@@ -13,7 +13,7 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-#include "http_server_app.h"
+// #include "http_server_app.h"
 
 #define EXAMPLE_ESP_MAXIMUM_RETRY  5
 
@@ -54,7 +54,7 @@ static void start_web_server_task()
             ESP_LOGE(TAG, "UNEXPECTED EVENT");
         }
 
-        HTTP_SERVER_Start();
+        // HTTP_SERVER_Start();
     }    
 }
 
@@ -81,10 +81,7 @@ static void event_handler(void* arg, esp_event_base_t event_base,
 }
 
 void WIFI_STA_APP_Connect(char *ssid, char *pass)
-{    
-    esp_wifi_disconnect();
-    esp_wifi_stop();
-
+{
     if(is_initialized == 0)
     {
         s_wifi_event_group = xEventGroupCreate();
@@ -92,9 +89,7 @@ void WIFI_STA_APP_Connect(char *ssid, char *pass)
 
         ESP_ERROR_CHECK(esp_netif_init());
 
-        esp_event_loop_delete_default();
         ESP_ERROR_CHECK(esp_event_loop_create_default());
-        // esp_netif_destroy_default_wifi(NULL);
         esp_netif_create_default_wifi_sta();
 
         wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -116,12 +111,16 @@ void WIFI_STA_APP_Connect(char *ssid, char *pass)
         is_initialized = 1;
     }
 
+    // HTTP_SERVER_Stop();
 
     if(ssid == NULL || pass == NULL)
     {
         printf("SSID or Password incorrect\n");
         return;
     }
+        
+    esp_wifi_disconnect();
+    esp_wifi_stop();
 
     wifi_config_t wifi_config = {
         .sta = {
@@ -145,7 +144,7 @@ void WIFI_STA_APP_Connect(char *ssid, char *pass)
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_APSTA));
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
     ESP_ERROR_CHECK(esp_wifi_start());
 

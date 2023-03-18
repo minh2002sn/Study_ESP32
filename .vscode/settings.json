@@ -23,6 +23,16 @@
         "subdriver_exti.h": "c",
         "cmath": "c",
         "esp_http_server.h": "c",
-        "esp_eth.h": "c"
+        "esp_eth.h": "c",
+        "esp_log.h": "c",
+        "err.h": "c",
+        "wifi_station_app.h": "c",
+        "http_server_app.h": "c",
+        "esp_netif.h": "c",
+        "esp_wifi.h": "c",
+        "nvs.h": "c",
+        "netdb.h": "c",
+        "json_generator.h": "c",
+        "app_wifi_config.h": "c"
     }
 }
