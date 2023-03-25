@@ -10,9 +10,10 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include <inttypes.h>
+
 #include "esp_wifi.h"
 #include "esp_system.h"
-#include "nvs_flash.h"
 #include "esp_event.h"
 #include "esp_netif.h"
 
@@ -34,10 +35,8 @@ static const char *TAG = "APP_MQTT";
 
 extern const uint8_t client_cert_pem_start[] asm("_binary_client_crt_start");
 extern const uint8_t client_cert_pem_end[] asm("_binary_client_crt_end");
-extern const uint8_t client_key_pem_start[] asm("_binary_client_key_start");
-extern const uint8_t client_key_pem_end[] asm("_binary_client_key_end");
-extern const uint8_t server_cert_pem_start[] asm("_binary_mosquitto_org_crt_start");
-extern const uint8_t server_cert_pem_end[] asm("_binary_mosquitto_org_crt_end");
+
+static esp_mqtt_client_handle_t client;
 
 static void log_error_if_nonzero(const char *message, int error_code)
 {
@@ -58,7 +57,7 @@ static void log_error_if_nonzero(const char *message, int error_code)
  */
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
-    ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%d", base, event_id);
+    ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%ld", base, event_id);
     esp_mqtt_event_handle_t event = event_data;
     esp_mqtt_client_handle_t client = event->client;
     int msg_id;
@@ -67,12 +66,6 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
         msg_id = esp_mqtt_client_subscribe(client, "/v1.6/devices/test_mqtt/relay", 0);
         ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-        // msg_id = esp_mqtt_client_subscribe(client, "/deltacross/qos1", 1);
-        // ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-        // msg_id = esp_mqtt_client_unsubscribe(client, "/deltacross/qos1");
-        // ESP_LOGI(TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
         break;
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
@@ -114,26 +107,18 @@ void APP_MQTT_Start(void)
 {
     const esp_mqtt_client_config_t mqtt_cfg = 
     {
-        // .broker.address.uri = "mqtt://test.mosquitto.org:1883",
-        // .broker.address.uri = "mqtts://l07ba11f.ala.us-east-1.emqxsl.com:8883"
-        // .broker.address.uri = "mqtts://test.mosquitto.org:8884",
-        // .broker.verification.certificate = (const char *)server_cert_pem_start,
-        .broker.address.uri = "mqtt://industrial.api.ubidots.com:1883",
-        .broker.verification.certificate = (const char *)server_cert_pem_start,
-        .credentials = 
-        {
-            .username = TOKEN,
-            // .authentication = 
-            // {
-            //     .certificate = (const char *)client_cert_pem_start,
-            //     .key = (const char *)client_key_pem_start,
-            // },
-        }
+        .broker.address.uri = "mqtts://industrial.api.ubidots.com:8883",
+        .broker.verification.certificate = (const char *)client_cert_pem_start,
+        .credentials.username = TOKEN,
     };
 
-    ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
-    esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
-    /* The last argument may be used to pass data to the event handler, in this example mqtt_event_handler */
+    client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
     esp_mqtt_client_start(client);
+}
+
+void APP_MQTT_SendJson(char *topic, char *json_data)
+{
+    int msg_id = esp_mqtt_client_publish(client, topic, json_data, 0, 1, 0);
+    ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
 }

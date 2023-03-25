@@ -33,6 +33,13 @@
         "nvs.h": "c",
         "netdb.h": "c",
         "json_generator.h": "c",
-        "app_wifi_config.h": "c"
+        "app_wifi_config.h": "c",
+        "app_mqtt.h": "c",
+        "mqtt_client.h": "c",
+        "sdkconfig.h": "c",
+        "esp_system.h": "c",
+        "sockets.h": "c",
+        "stdint.h": "c",
+        "app_dht.h": "c"
     }
 }

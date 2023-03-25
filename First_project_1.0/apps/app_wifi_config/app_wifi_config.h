@@ -1,0 +1,13 @@
+#ifndef APP_CONFIG_H
+#define APP_CONFIG_H
+
+typedef enum
+{
+    PROVISION_BY_ACCESSPOINT,
+    PROVISION_BY_SMARTCONFIG,
+} PROVISION_TYPE_t;
+
+void APP_WIFI_CONFIG_Init();
+void APP_WIFI_CONFIG_Handle(PROVISION_TYPE_t type);
+
+#endif
