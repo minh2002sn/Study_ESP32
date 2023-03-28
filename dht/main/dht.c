@@ -66,11 +66,21 @@ static int8_t __CheckingRespone(DHT_DATA_t *dht)
 
 static int8_t __CheckingCRC(uint8_t data[])
 {
-    if(data[4] == (uint8_t)(data[0] + data[1] + data[2] + data[3]))
+    if(data[4] == (data[0] + data[1] + data[2] + data[3]))
         return DHT_OK;
     else
         return DHT_CRC_ERROR;
 }
+
+// static struct dht11_reading _timeoutError() {
+//     struct dht11_reading timeoutError = {DHT_TIMEOUT_ERROR, -1, -1};
+//     return timeoutError;
+// }
+
+// static struct dht11_reading _crcError() {
+//     struct dht11_reading crcError = {DHT_CRC_ERROR, -1, -1};
+//     return crcError;
+// }
 
 void DHT_Init(DHT_DATA_t *dht, uint16_t pin, DHT_TYPE_t dht_type)
 {
@@ -109,8 +119,9 @@ int8_t DHT_Read(DHT_DATA_t *dht)
         }
     }
 
-    printf("%02x %02x %02x %02x %02x\n", data[0], data[1], data[2], data[3], data[4]);
     if(__CheckingCRC(data) == DHT_OK) {
+        printf("%02x %02x %02x %02x %02x\n", data[0], data[1], data[2], data[3], data[4]);
+        
         switch(dht->type)
         {
             case DHT11:
@@ -127,7 +138,6 @@ int8_t DHT_Read(DHT_DATA_t *dht)
 
         return DHT_OK;
     } else {
-        printf("check\n");
         return DHT_CRC_ERROR;
     }
 }

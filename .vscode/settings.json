@@ -40,6 +40,7 @@
         "esp_system.h": "c",
         "sockets.h": "c",
         "stdint.h": "c",
-        "app_dht.h": "c"
+        "app_dht.h": "c",
+        "dht.h": "c"
     }
 }

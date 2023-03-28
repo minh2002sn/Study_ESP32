@@ -54,22 +54,22 @@ static void mqtt_upload_task_handler()
         json_gen_start_object(&jstr);
 
         if(environment_data.illuminance.enable)
-            json_gen_obj_set_float(&jstr, "illuminance", environment_data.illuminance.value + offset);
+            json_gen_obj_set_float(&jstr, "illuminance", environment_data.illuminance.value);
         else
             json_gen_obj_set_float(&jstr, "illuminance", 0);
         
         if(environment_data.air_temperature.enable)
-            json_gen_obj_set_float(&jstr, "air_temperature", environment_data.air_temperature.value + offset);
+            json_gen_obj_set_float(&jstr, "air_temperature", environment_data.air_temperature.value);
         else
             json_gen_obj_set_float(&jstr, "air_temperature", 0);
 
         if(environment_data.air_humidity.enable)
-            json_gen_obj_set_float(&jstr, "air_humidity", environment_data.air_humidity.value + offset);
+            json_gen_obj_set_float(&jstr, "air_humidity", environment_data.air_humidity.value);
         else
             json_gen_obj_set_float(&jstr, "air_humidity", 0);
 
         if(environment_data.soil_moisture.enable)
-            json_gen_obj_set_float(&jstr, "soil_moisture", environment_data.soil_moisture.value + offset);
+            json_gen_obj_set_float(&jstr, "soil_moisture", environment_data.soil_moisture.value);
         else
             json_gen_obj_set_float(&jstr, "soil_moisture", 0);
 
