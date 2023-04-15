@@ -109,7 +109,7 @@ int8_t DHT_Read(DHT_DATA_t *dht)
         }
     }
 
-    printf("%02x %02x %02x %02x %02x\n", data[0], data[1], data[2], data[3], data[4]);
+    // printf("%02x %02x %02x %02x %02x\n", data[0], data[1], data[2], data[3], data[4]);
     if(__CheckingCRC(data) == DHT_OK) {
         switch(dht->type)
         {
@@ -127,7 +127,7 @@ int8_t DHT_Read(DHT_DATA_t *dht)
 
         return DHT_OK;
     } else {
-        printf("check\n");
+        // printf("check\n");
         return DHT_CRC_ERROR;
     }
 }

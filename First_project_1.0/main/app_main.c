@@ -15,8 +15,8 @@
 #include "app_wifi_config.h"
 #include "app_env_data_manage.h"
 #include "app_dht.h"
-
-#define KEY   "restart_cnt"
+#include "app_illuminance.h"
+#include "app_soil_moisture.h"
 
 static const char *TAG = "APP_MAIN";
 
@@ -32,7 +32,9 @@ void app_main(void)
   APP_WIFI_CONFIG_Handle(PROVISION_BY_SMARTCONFIG);
   APP_MQTT_Start();
 
-  // APP_ENV_DATA_MANAGE_Init();
+  APP_ENV_DATA_MANAGE_Init();
   APP_DHT_Init();
+  APP_ILLUMINANCE_Init();
+  APP_SOIL_MOISTURE_Init();
 
 }

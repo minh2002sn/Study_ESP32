@@ -4,6 +4,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/queue.h"
 #include "freertos/semphr.h"
 
 #include "json_generator.h"
@@ -13,8 +14,16 @@
 
 #define DEVICE_LABEL    "test_mqtt"
 
-static SemaphoreHandle_t env_data_mutex;
 static TaskHandle_t mqtt_upload_task;
+static TaskHandle_t set_data_task;
+static QueueHandle_t setting_data_queue;
+static SemaphoreHandle_t setting_data_mutex;
+
+typedef struct
+{
+    APP_ENV_SETTING_TYPE_t type;
+    float value;
+} __attribute__((packed)) SETTING_DATA_t;
 
 static ENVIRONMENT_DATA_t environment_data = 
 {
@@ -40,13 +49,29 @@ static ENVIRONMENT_DATA_t environment_data =
     },
 };
 
+static void set_data_task_handler()
+{
+    SETTING_DATA_t setting_data = {};
+    while(1)
+    {
+        if(xQueueReceive(setting_data_queue, &setting_data, portMAX_DELAY))
+        {
+            xSemaphoreTake(setting_data_mutex, portMAX_DELAY);
+            SENSOR_DATA_t *sensor_data = (SENSOR_DATA_t *)&environment_data;
+            (sensor_data + setting_data.type)->value = setting_data.value;
+            xSemaphoreGive(setting_data_mutex);
+        }
+
+    }
+}
+
 static void mqtt_upload_task_handler()
 {
-    int offset = 0;
     vTaskDelay(5000/portTICK_PERIOD_MS);
     
     while(1)
     {
+        xSemaphoreTake(setting_data_mutex, portMAX_DELAY);
         char buf[256] = {};
         json_gen_str_t jstr;
 
@@ -79,22 +104,44 @@ static void mqtt_upload_task_handler()
         printf("JSON string: %s\n", buf);
         APP_MQTT_SendJson("/v1.6/devices/" DEVICE_LABEL, buf);
 
-        offset = (!offset) * 10;
+        xSemaphoreGive(setting_data_mutex);
 
         vTaskDelay(5000/portTICK_PERIOD_MS);
-
     }
 }
 
 void APP_ENV_DATA_MANAGE_Init()
 {
-    env_data_mutex = xSemaphoreCreateMutex();
+    setting_data_mutex = xSemaphoreCreateMutex();
+    setting_data_queue = xQueueCreate(8, sizeof(SETTING_DATA_t));
     xTaskCreate(mqtt_upload_task_handler, "mqtt_upload_task", 3072, NULL, 10, &mqtt_upload_task);
-
+    xTaskCreate(set_data_task_handler, "set_data_task_handler", 2048, NULL, 10, &set_data_task);
 }
 
-void APP_ENV_DATA_MANAGE_SetEnvData(ENVIRONMENT_DATA_t *env_data, bool is_change_on_or_off, bool is_change_value)
+void APP_ENV_DATA_MANAGE_SetValue(APP_ENV_SETTING_TYPE_t type, float value)
 {
+    SETTING_DATA_t setting_data = 
+    {
+        .type = type,
+        .value = value,
+    };
+    xQueueSend(setting_data_queue, &setting_data, 0);
+}
+
+void APP_ENV_DATA_MANAGE_SetEnable(APP_ENV_SETTING_TYPE_t type)
+{
+    // Coming soon
+}
+
+void APP_ENV_DATA_MANAGE_SetDisable(APP_ENV_SETTING_TYPE_t type)
+{
+    // Coming soon
+}
+
+#if 0
+void APP_ENV_DATA_MANAGE_SetEnvData(ENVIRONMENT_DATA_t *env_data, bool is_change_on_or_off, bool is_change_value, uint64_t delay_tick)
+{
+    xSemaphoreTake(env_data_mutex, delay_tick);
     if(is_change_on_or_off)
     {
         environment_data.illuminance.enable = env_data->illuminance.enable;
@@ -110,10 +157,12 @@ void APP_ENV_DATA_MANAGE_SetEnvData(ENVIRONMENT_DATA_t *env_data, bool is_change
         environment_data.air_humidity.value = env_data->air_humidity.value;
         environment_data.soil_moisture.value = env_data->soil_moisture.value;
     }
+    xSemaphoreGive(env_data_mutex);
 }
 
-void APP_ENV_DATA_MANAGE_SetIllData(SENSOR_DATA_t *sensor_data, bool is_change_on_or_off, bool is_change_value)
+void APP_ENV_DATA_MANAGE_SetIllData(SENSOR_DATA_t *sensor_data, bool is_change_on_or_off, bool is_change_value, uint64_t delay_tick)
 {
+    xSemaphoreTake(env_data_mutex, delay_tick);
     if(is_change_on_or_off)
     {
         environment_data.illuminance.enable = sensor_data->enable;
@@ -123,10 +172,12 @@ void APP_ENV_DATA_MANAGE_SetIllData(SENSOR_DATA_t *sensor_data, bool is_change_o
     {
         environment_data.illuminance.value = sensor_data->value;
     }
+    xSemaphoreGive(env_data_mutex);
 }
 
-void APP_ENV_DATA_MANAGE_SetAirTempData(SENSOR_DATA_t *sensor_data, bool is_change_on_or_off, bool is_change_value)
+void APP_ENV_DATA_MANAGE_SetAirTempData(SENSOR_DATA_t *sensor_data, bool is_change_on_or_off, bool is_change_value, uint64_t delay_tick)
 {
+    xSemaphoreTake(env_data_mutex, delay_tick);
     if(is_change_on_or_off)
     {
         environment_data.air_temperature.enable = sensor_data->enable;
@@ -136,10 +187,12 @@ void APP_ENV_DATA_MANAGE_SetAirTempData(SENSOR_DATA_t *sensor_data, bool is_chan
     {
         environment_data.air_temperature.value = sensor_data->value;
     }
+    xSemaphoreGive(env_data_mutex);
 }
 
-void APP_ENV_DATA_MANAGE_SetAirHumiData(SENSOR_DATA_t *sensor_data, bool is_change_on_or_off, bool is_change_value)
+void APP_ENV_DATA_MANAGE_SetAirHumiData(SENSOR_DATA_t *sensor_data, bool is_change_on_or_off, bool is_change_value, uint64_t delay_tick)
 {
+    xSemaphoreTake(env_data_mutex, delay_tick);
     if(is_change_on_or_off)
     {
         environment_data.air_humidity.enable = sensor_data->enable;
@@ -149,10 +202,12 @@ void APP_ENV_DATA_MANAGE_SetAirHumiData(SENSOR_DATA_t *sensor_data, bool is_chan
     {
         environment_data.air_humidity.value = sensor_data->value;
     }
+    xSemaphoreGive(env_data_mutex);
 }
 
-void APP_ENV_DATA_MANAGE_SetSoilMoistData(SENSOR_DATA_t *sensor_data, bool is_change_on_or_off, bool is_change_value)
+void APP_ENV_DATA_MANAGE_SetSoilMoistData(SENSOR_DATA_t *sensor_data, bool is_change_on_or_off, bool is_change_value, uint64_t delay_tick)
 {
+    xSemaphoreTake(env_data_mutex, delay_tick);
     if(is_change_on_or_off)
     {
         environment_data.soil_moisture.enable = sensor_data->enable;
@@ -162,30 +217,44 @@ void APP_ENV_DATA_MANAGE_SetSoilMoistData(SENSOR_DATA_t *sensor_data, bool is_ch
     {
         environment_data.soil_moisture.value = sensor_data->value;
     }
+    xSemaphoreGive(env_data_mutex);
 }
 
-ENVIRONMENT_DATA_t APP_ENV_DATA_MANAGE_GetEnvData()
+ENVIRONMENT_DATA_t APP_ENV_DATA_MANAGE_GetEnvData(uint64_t delay_tick)
 {
+    xSemaphoreTake(env_data_mutex, delay_tick);
+    xSemaphoreGive(env_data_mutex);
     return environment_data;
 }
 
-SENSOR_DATA_t APP_ENV_DATA_MANAGE_GetIllData()
+SENSOR_DATA_t APP_ENV_DATA_MANAGE_GetIllData(uint64_t delay_tick)
 {
+    xSemaphoreTake(env_data_mutex, delay_tick);
+    xSemaphoreGive(env_data_mutex);
     return environment_data.illuminance;
 }
 
-SENSOR_DATA_t APP_ENV_DATA_MANAGE_GetAirTempData()
+SENSOR_DATA_t APP_ENV_DATA_MANAGE_GetAirTempData(uint64_t delay_tick)
 {
+    xSemaphoreTake(env_data_mutex, delay_tick);
+    xSemaphoreGive(env_data_mutex);
     return environment_data.air_temperature;
 }
 
 
-SENSOR_DATA_t APP_ENV_DATA_MANAGE_GetAirHumiData()
+SENSOR_DATA_t APP_ENV_DATA_MANAGE_GetAirHumiData(uint64_t delay_tick)
 {
+    xSemaphoreTake(env_data_mutex, delay_tick);
+    xSemaphoreGive(env_data_mutex);
     return environment_data.air_humidity;
 }
 
-SENSOR_DATA_t APP_ENV_DATA_MANAGE_GetSoilMoisData()
+SENSOR_DATA_t APP_ENV_DATA_MANAGE_GetSoilMoisData(uint64_t delay_tick)
 {
+    xSemaphoreTake(env_data_mutex, delay_tick);
+    xSemaphoreGive(env_data_mutex);
     return environment_data.soil_moisture;
 }
+
+#endif
+
