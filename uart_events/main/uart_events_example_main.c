@@ -16,6 +16,7 @@
 #include "esp_log.h"
 
 #include "subdriver_gpio.h"
+#include "subdriver_pwm.h"
 
 static const char *TAG = "uart_events";
 

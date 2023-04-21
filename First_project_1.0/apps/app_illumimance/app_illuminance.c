@@ -14,9 +14,6 @@
 #define TASK_DELAY_TIME         5000
 #define WAITING_SET_DATA_TIME   1000
 
-#define A                       1.11921246
-#define B                       0.18181753
-
 static TaskHandle_t get_illuminance_task;
 
 
@@ -37,5 +34,5 @@ static void get_illuminance_task_handler()
 
 void APP_ILLUMINANCE_Init()
 {
-    xTaskCreate(get_illuminance_task_handler, "get_illuminance_task_handler", 2048, NULL, 11, &get_illuminance_task);
+    xTaskCreate(get_illuminance_task_handler, "get_illuminance_task_handler", 2048, NULL, tskIDLE_PRIORITY, &get_illuminance_task);
 }

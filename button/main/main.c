@@ -18,7 +18,8 @@
 #include "subdriver_gpio.h" 
 #include "subdriver_exti.h"
 
-#define GPIO_BUTTON_PIN     9
+// #define GPIO_BUTTON_PIN     9
+#define GPIO_BUTTON_PIN     1
 #define GPIO_RGB_LED_PIN_1  3
 #define GPIO_RGB_LED_PIN_2  4
 #define GPIO_RGB_LED_PIN_3  5
@@ -42,11 +43,11 @@ static void BUTTON_Releasing_Handle(int pin)
     if(pin == GPIO_BUTTON_PIN)
     {
         printf("Releasing\n");
-        counter++;
-        if(counter == 8) counter = 0;
-        SUBDRIVER_GPIO_SetState(GPIO_RGB_LED_PIN_1, counter & 1);
-        SUBDRIVER_GPIO_SetState(GPIO_RGB_LED_PIN_2, counter & 2);
-        SUBDRIVER_GPIO_SetState(GPIO_RGB_LED_PIN_3, counter & 4);
+        // counter++;
+        // if(counter == 8) counter = 0;
+        // SUBDRIVER_GPIO_SetState(GPIO_RGB_LED_PIN_1, counter & 1);
+        // SUBDRIVER_GPIO_SetState(GPIO_RGB_LED_PIN_2, counter & 2);
+        // SUBDRIVER_GPIO_SetState(GPIO_RGB_LED_PIN_3, counter & 4);
     }
 }
 
@@ -74,9 +75,11 @@ static void EXTI_CallbackFunction(uint32_t pin)
 
 void app_main(void)
 {
-    SUBDRIVER_GPIO_OutputInit(GPIO_RGB_LED_PIN_1);
-    SUBDRIVER_GPIO_OutputInit(GPIO_RGB_LED_PIN_2);
-    SUBDRIVER_GPIO_OutputInit(GPIO_RGB_LED_PIN_3);
+    // SUBDRIVER_GPIO_OutputInit(GPIO_RGB_LED_PIN_1);
+    // SUBDRIVER_GPIO_OutputInit(GPIO_RGB_LED_PIN_2);
+    // SUBDRIVER_GPIO_OutputInit(GPIO_RGB_LED_PIN_3);
+
+    SUBDRIVER_GPIO_OutputInit(0);
 
     // SUBDRIVER_EXTI_Init(GPIO_BUTTON_PIN, EXTI_EDGE_ANY);
     SUBDRIVER_EXTI_SetCallbackFunction(EXTI_CallbackFunction);
@@ -84,6 +87,14 @@ void app_main(void)
     BUTTON_SetCallbackFunction( BUTTON_Pressing_Handle, BUTTON_Releasing_Handle, 
                                 BUTTON_Short_Press_Handle, BUTTON_Long_Press_Handle);
     BUTTON_Init(&button, GPIO_BUTTON_PIN);
+
+    while(1)
+    {
+        SUBDRIVER_GPIO_SetState(0, 1);
+        vTaskDelay(500/portTICK_PERIOD_MS);
+        SUBDRIVER_GPIO_SetState(0, 0);
+        vTaskDelay(500/portTICK_PERIOD_MS);
+    }
 
 }
  

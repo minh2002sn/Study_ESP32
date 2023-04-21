@@ -7,10 +7,8 @@
 
 #include "esp_log.h"
 
-#include "json_generator.h"
-#include "json_parser.h"
-
 #include "app_nvs.h"
+#include "app_output.h"
 #include "app_mqtt.h"
 #include "app_wifi_config.h"
 #include "app_env_data_manage.h"
@@ -30,11 +28,12 @@ void app_main(void)
 
   APP_WIFI_CONFIG_Init();
   APP_WIFI_CONFIG_Handle(PROVISION_BY_SMARTCONFIG);
-  APP_MQTT_Start();
 
   APP_ENV_DATA_MANAGE_Init();
   APP_DHT_Init();
   APP_ILLUMINANCE_Init();
   APP_SOIL_MOISTURE_Init();
 
+  APP_OUTPUT_Init();
+  APP_MQTT_Start();
 }

@@ -22,7 +22,7 @@ static TaskHandle_t get_soil_moisture_task;
 static void get_soil_moisture_task_handler()
 {
     SPI_ADC_DATA_t sm_sensor_adc;
-    SPI_ADC_Init(&sm_sensor_adc, SPI_ADC_CH0);
+    SPI_ADC_Init(&sm_sensor_adc, SPI_ADC_CH1);
     while(1)
     {
         esp_err_t ret = SPI_ADC_ReadValue(&sm_sensor_adc);
@@ -41,6 +41,6 @@ static void get_soil_moisture_task_handler()
 
 void APP_SOIL_MOISTURE_Init()
 {
-    xTaskCreate(get_soil_moisture_task_handler, "get_soil_moisture_task_handler", 2048, NULL, 11, &get_soil_moisture_task);
+    xTaskCreate(get_soil_moisture_task_handler, "get_soil_moisture_task_handler", 2048, NULL, tskIDLE_PRIORITY, &get_soil_moisture_task);
 }
 

@@ -55,7 +55,7 @@ esp_err_t SPI_ADC_ReadValue(SPI_ADC_DATA_t *spi_adc)
     if(ret == ESP_OK)
     {
         spi_adc->raw_value = ((uint16_t)trans_data.rx_data[0] << 4) | ((uint16_t)trans_data.rx_data[1] >> 4);
-        printf("Status[%d]: %04X - %d\n", ret, spi_adc->raw_value, spi_adc->raw_value);
+        // printf("Status[%d]: %04X - %d\n", ret, spi_adc->raw_value, spi_adc->raw_value);
     }
     return ret;
 

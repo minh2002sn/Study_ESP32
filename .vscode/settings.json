@@ -47,6 +47,9 @@
         "app_env_data_manage.h": "c",
         "app_soil_moisture.h": "c",
         "bh1750fvi.h": "c",
-        "i2c.h": "c"
+        "i2c.h": "c",
+        "subdriver_pwm.h": "c",
+        "app_output.h": "c",
+        "ledc.h": "c"
     }
 }

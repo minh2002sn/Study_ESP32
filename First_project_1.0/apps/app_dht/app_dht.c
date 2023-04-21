@@ -14,7 +14,7 @@
 #define TASK_DELAY_TIME         5000
 #define WAITING_SET_DATA_TIME   1000
 
-#define DHT_PIN                 1
+#define DHT_PIN                 8
 
 static TaskHandle_t get_dht_task;
 
@@ -39,5 +39,5 @@ static void get_dht_task_handler()
 
 void APP_DHT_Init()
 {
-    xTaskCreate(get_dht_task_handler, "get_dht_task_handler", 2048, NULL, 11, &get_dht_task);
+    xTaskCreate(get_dht_task_handler, "get_dht_task_handler", 2048, NULL, tskIDLE_PRIORITY, &get_dht_task);
 }
