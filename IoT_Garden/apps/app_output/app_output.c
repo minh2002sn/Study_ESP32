@@ -59,6 +59,12 @@ static void output_handle_task_handler()
 
     while(1)
     {
+        // static uint64_t timer = 0;
+        // if(GET_TICK - timer > 1000)
+        // {
+        //     printf("output state: %d\n", output_state);
+        //     timer = GET_TICK;
+        // }
         ENVIRONMENT_DATA_t env_data = APP_ENV_DATA_MANAGE_GetValue();
         if(is_changing_state == 0)
         {
@@ -147,7 +153,7 @@ void APP_OUTPUT_Init()
     setting_data_mutex = xSemaphoreCreateMutex();
     setting_data_queue = xQueueCreate(8, sizeof(SETTING_DATA_t));
     xTaskCreate(output_handle_task_handler, "output_handle_task", 2048, NULL, tskIDLE_PRIORITY, &output_handle_task);
-    xTaskCreate(setting_data_task_handler, "setting_data_task", 2048, NULL, tskIDLE_PRIORITY, &setting_data_task);
+    xTaskCreate(setting_data_task_handler, "setting_data_task", 2048, NULL, 10, &setting_data_task);
 }
 
 void APP_OUTPUT_SetRefValue(APP_OUTPUT_SETTING_REF_TYPE_t type, float value)

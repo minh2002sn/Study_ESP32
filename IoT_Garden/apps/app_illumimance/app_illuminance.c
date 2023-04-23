@@ -34,5 +34,5 @@ static void get_illuminance_task_handler()
 
 void APP_ILLUMINANCE_Init()
 {
-    xTaskCreate(get_illuminance_task_handler, "get_illuminance_task_handler", 2048, NULL, tskIDLE_PRIORITY, &get_illuminance_task);
+    xTaskCreate(get_illuminance_task_handler, "get_illuminance_task_handler", 2048, NULL, 1, &get_illuminance_task);
 }

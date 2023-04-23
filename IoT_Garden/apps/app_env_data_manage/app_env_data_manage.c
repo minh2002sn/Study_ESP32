@@ -102,7 +102,7 @@ static void mqtt_upload_task_handler()
         json_gen_str_end(&jstr);
 
         printf("JSON string: %s\n", buf);
-        // APP_MQTT_SendJson("/v1.6/devices/" DEVICE_LABEL, buf);
+        APP_MQTT_SendJson("/v1.6/devices/" DEVICE_LABEL, buf);
 
         xSemaphoreGive(setting_data_mutex);
 
@@ -114,8 +114,8 @@ void APP_ENV_DATA_MANAGE_Init()
 {
     setting_data_mutex = xSemaphoreCreateMutex();
     setting_data_queue = xQueueCreate(8, sizeof(SETTING_DATA_t));
-    xTaskCreate(mqtt_upload_task_handler, "mqtt_upload_task", 3072, NULL, tskIDLE_PRIORITY, &mqtt_upload_task);
-    xTaskCreate(set_data_task_handler, "set_data_task_handler", 2048, NULL, 1, &set_data_task);
+    xTaskCreate(mqtt_upload_task_handler, "mqtt_upload_task", 3072, NULL, 2, &mqtt_upload_task);
+    xTaskCreate(set_data_task_handler, "set_data_task_handler", 2048, NULL, 10, &set_data_task);
 }
 
 void APP_ENV_DATA_MANAGE_SetValue(APP_ENV_SETTING_TYPE_t type, float value)

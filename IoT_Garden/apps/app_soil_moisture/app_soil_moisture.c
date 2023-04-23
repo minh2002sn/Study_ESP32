@@ -41,6 +41,6 @@ static void get_soil_moisture_task_handler()
 
 void APP_SOIL_MOISTURE_Init()
 {
-    xTaskCreate(get_soil_moisture_task_handler, "get_soil_moisture_task_handler", 2048, NULL, tskIDLE_PRIORITY, &get_soil_moisture_task);
+    xTaskCreate(get_soil_moisture_task_handler, "get_soil_moisture_task_handler", 2048, NULL, 1, &get_soil_moisture_task);
 }
 

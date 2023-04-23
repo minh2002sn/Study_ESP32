@@ -157,6 +157,53 @@ static void start_access_point(char *ssid, char *pass)
 
 }
 
+void APP_WIFI_CONFIG_Connect(PROVISION_TYPE_t type)
+{
+    provision_type = type;
+    switch(provision_type)
+    {
+        case PROVISION_BY_ACCESSPOINT:
+            start_access_point("ESP32", "123456789");
+            APP_HTTP_SERVER_PostSetCallback(http_post_wifi_info_callback);
+            APP_HTTP_SERVER_Start();
+            xEventGroupWaitBits(s_wifi_event_group, HTTP_CONFIG_DONE_BIT, true, false, portMAX_DELAY);
+            APP_HTTP_SERVER_Stop();
+            esp_wifi_disconnect();
+            esp_wifi_stop();
+            wifi_config_t wifi_config = {
+                .sta = {
+                    .threshold.authmode = WIFI_AUTH_WPA2_PSK,
+                    .sae_pwe_h2e = WPA3_SAE_PWE_BOTH,
+                    .pmf_cfg = 
+                    {
+                        .capable = true,
+                        .required = false
+                    }
+                },
+            };
+            strcpy((char *)wifi_config.sta.ssid, ssid);
+            strcpy((char *)wifi_config.sta.password, pass);
+            ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+            ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
+            ESP_ERROR_CHECK(esp_wifi_start());
+            break;
+
+        case PROVISION_BY_SMARTCONFIG:
+            esp_wifi_disconnect();
+            esp_wifi_stop();
+            ESP_ERROR_CHECK(esp_wifi_start());
+            ESP_ERROR_CHECK(esp_smartconfig_set_type(SC_TYPE_ESPTOUCH));
+            smartconfig_start_config_t cfg = SMARTCONFIG_START_CONFIG_DEFAULT();
+            ESP_ERROR_CHECK(esp_smartconfig_start(&cfg));
+            xEventGroupWaitBits(s_wifi_event_group, ESPTOUCH_DONE_BIT, true, false, portMAX_DELAY);
+            esp_smartconfig_stop();
+            break;
+
+        default:
+            break;
+    }
+} 
+
 void APP_WIFI_CONFIG_Handle(PROVISION_TYPE_t type)
 {
     provision_type = type;
@@ -175,46 +222,7 @@ void APP_WIFI_CONFIG_Handle(PROVISION_TYPE_t type)
     }
     else
     {
-        switch(provision_type)
-        {
-            case PROVISION_BY_ACCESSPOINT:
-                start_access_point("ESP32", "123456789");
-                APP_HTTP_SERVER_PostSetCallback(http_post_wifi_info_callback);
-                APP_HTTP_SERVER_Start();
-                xEventGroupWaitBits(s_wifi_event_group, HTTP_CONFIG_DONE_BIT, true, false, portMAX_DELAY);
-                APP_HTTP_SERVER_Stop();
-                esp_wifi_disconnect();
-                esp_wifi_stop();
-                wifi_config_t wifi_config = {
-                    .sta = {
-                        .threshold.authmode = WIFI_AUTH_WPA2_PSK,
-                        .sae_pwe_h2e = WPA3_SAE_PWE_BOTH,
-                        .pmf_cfg = 
-                        {
-                            .capable = true,
-                            .required = false
-                        }
-                    },
-                };
-                strcpy((char *)wifi_config.sta.ssid, ssid);
-                strcpy((char *)wifi_config.sta.password, pass);
-                ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-                ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config) );
-                ESP_ERROR_CHECK(esp_wifi_start());
-                break;
-
-            case PROVISION_BY_SMARTCONFIG:
-                ESP_ERROR_CHECK(esp_wifi_start());
-                ESP_ERROR_CHECK(esp_smartconfig_set_type(SC_TYPE_ESPTOUCH));
-                smartconfig_start_config_t cfg = SMARTCONFIG_START_CONFIG_DEFAULT();
-                ESP_ERROR_CHECK(esp_smartconfig_start(&cfg));
-                xEventGroupWaitBits(s_wifi_event_group, ESPTOUCH_DONE_BIT, true, false, portMAX_DELAY);
-                esp_smartconfig_stop();
-                break;
-
-            default:
-                break;
-        }
+        APP_WIFI_CONFIG_Connect(type);
     }
 
     xEventGroupWaitBits(s_wifi_event_group, WIFI_CONNECTED_BIT, false, false, portMAX_DELAY);

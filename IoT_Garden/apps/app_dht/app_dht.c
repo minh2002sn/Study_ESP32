@@ -39,5 +39,5 @@ static void get_dht_task_handler()
 
 void APP_DHT_Init()
 {
-    xTaskCreate(get_dht_task_handler, "get_dht_task_handler", 2048, NULL, tskIDLE_PRIORITY, &get_dht_task);
+    xTaskCreate(get_dht_task_handler, "get_dht_task_handler", 2048, NULL, 1, &get_dht_task);
 }
