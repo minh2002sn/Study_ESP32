@@ -27,8 +27,6 @@
 
 BUTTON_HANDLE_t button;
 
-extern QueueHandle_t        button_event_queue;
-
 static void BUTTON_Pressing_Handle(int pin)
 {
     if(pin == GPIO_BUTTON_PIN)

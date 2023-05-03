@@ -16,6 +16,9 @@
 #include "esp_log.h"
 #include "esp_smartconfig.h"
 
+#include "app_env_data_manage.h"
+#include "app_led.h"
+
 static const char *TAG = "APP WIFI CONFIG";
 
 PROVISION_TYPE_t provision_type = PROVISION_BY_ACCESSPOINT;
@@ -45,12 +48,15 @@ static void event_handler(void* arg, esp_event_base_t event_base,
         // xTaskCreate(smartconfig_example_task, "smartconfig_example_task", 4096, NULL, 3, NULL);
         esp_wifi_connect();
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        APP_LED_SetState(LED_OFF_STATE);
         esp_wifi_connect();
         xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        APP_LED_SetState(LED_ON_STATE);
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
     } else if (event_base == SC_EVENT && event_id == SC_EVENT_SCAN_DONE) {
         ESP_LOGI(TAG, "Scan done");
+        APP_LED_SetState(LED_BLINK_LOW);
     } else if (event_base == SC_EVENT && event_id == SC_EVENT_FOUND_CHANNEL) {
         ESP_LOGI(TAG, "Found channel");
     } else if (event_base == SC_EVENT && event_id == SC_EVENT_GOT_SSID_PSWD) {
@@ -157,8 +163,9 @@ static void start_access_point(char *ssid, char *pass)
 
 }
 
-void APP_WIFI_CONFIG_Connect(PROVISION_TYPE_t type)
+static void ConnectWifi(PROVISION_TYPE_t type)
 {
+    APP_LED_SetState(LED_OFF_STATE);
     provision_type = type;
     switch(provision_type)
     {
@@ -202,7 +209,14 @@ void APP_WIFI_CONFIG_Connect(PROVISION_TYPE_t type)
         default:
             break;
     }
-} 
+}
+
+void APP_WIFI_CONFIG_Connect(PROVISION_TYPE_t type)
+{
+    APP_ENV_DATA_MANAGE_StopSendData();
+    ConnectWifi(type);
+    APP_ENV_DATA_MANAGE_ResumeSendData();
+}
 
 void APP_WIFI_CONFIG_Handle(PROVISION_TYPE_t type)
 {
@@ -222,11 +236,11 @@ void APP_WIFI_CONFIG_Handle(PROVISION_TYPE_t type)
     }
     else
     {
-        APP_WIFI_CONFIG_Connect(type);
+        ConnectWifi(type);
     }
 
     xEventGroupWaitBits(s_wifi_event_group, WIFI_CONNECTED_BIT, false, false, portMAX_DELAY);
-    ESP_LOGI(TAG, "wifi connected");
+    // ESP_LOGI(TAG, "wifi connected");
 
 }
 

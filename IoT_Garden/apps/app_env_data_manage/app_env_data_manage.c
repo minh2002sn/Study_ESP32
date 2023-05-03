@@ -136,6 +136,16 @@ ENVIRONMENT_DATA_t APP_ENV_DATA_MANAGE_GetValue()
     return ret;
 }
 
+void APP_ENV_DATA_MANAGE_StopSendData()
+{
+    vTaskSuspend(mqtt_upload_task);
+}
+
+void APP_ENV_DATA_MANAGE_ResumeSendData()
+{
+    vTaskResume(mqtt_upload_task);
+}
+
 void APP_ENV_DATA_MANAGE_SetEnable(APP_ENV_SETTING_TYPE_t type)
 {
     // Coming soon

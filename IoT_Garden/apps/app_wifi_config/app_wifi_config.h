@@ -9,5 +9,6 @@ typedef enum
 
 void APP_WIFI_CONFIG_Init();
 void APP_WIFI_CONFIG_Handle(PROVISION_TYPE_t type);
+void APP_WIFI_CONFIG_Connect(PROVISION_TYPE_t type);
 
 #endif

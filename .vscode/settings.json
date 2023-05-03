@@ -50,6 +50,8 @@
         "i2c.h": "c",
         "subdriver_pwm.h": "c",
         "app_output.h": "c",
-        "ledc.h": "c"
+        "ledc.h": "c",
+        "app_button.h": "c",
+        "subdriver_gpio.h": "c"
     }
 }

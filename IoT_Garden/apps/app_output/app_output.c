@@ -29,10 +29,10 @@ typedef struct
 
 typedef struct
 {
+    uint16_t illu;
     uint16_t air_temp;
     uint16_t air_humi;
     uint16_t soil_mois;
-    uint16_t illu;
     uint16_t enable_on_of;
     uint16_t eneble_pwm;
 } REF_DATA_t;
@@ -43,8 +43,8 @@ static TaskHandle_t setting_data_task;
 static QueueHandle_t setting_data_queue;
 static SemaphoreHandle_t setting_data_mutex;
 
-static uint64_t change_state_time = 0;
-static uint8_t is_changing_state = 0;
+// static uint64_t change_stat  e_time = 0;
+// static uint8_t is_changing_state = 0;
 static uint8_t output_state = 0;
 
 static void output_handle_task_handler()
@@ -59,15 +59,16 @@ static void output_handle_task_handler()
 
     while(1)
     {
-        // static uint64_t timer = 0;
-        // if(GET_TICK - timer > 1000)
-        // {
-        //     printf("output state: %d\n", output_state);
-        //     timer = GET_TICK;
-        // }
+            // static uint64_t timer = 0;
+            // if(GET_TICK - timer > 1000)
+            // {
+            //     printf("output state: %d\n", ref_data.illu);
+            //     printf("output state: %d\n", output_state);
+            //     timer = GET_TICK;
+            // }
         ENVIRONMENT_DATA_t env_data = APP_ENV_DATA_MANAGE_GetValue();
-        if(is_changing_state == 0)
-        {
+        // if(is_changing_state == 0)
+        // {
             if(env_data.air_temperature.value > ref_data.air_temp ||
                 env_data.air_humidity.value > ref_data.air_humi ||
                 env_data.soil_moisture.value > ref_data.soil_mois ||
@@ -83,7 +84,7 @@ static void output_handle_task_handler()
                 // is_changing_state = 1;
                 // change_state_time = GET_TICK;
             }
-        }
+        // }
 
         // if(is_changing_state == 1)
         // {

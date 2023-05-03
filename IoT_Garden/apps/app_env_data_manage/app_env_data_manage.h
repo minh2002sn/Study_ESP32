@@ -32,5 +32,7 @@ void APP_ENV_DATA_MANAGE_SetValue(APP_ENV_SETTING_TYPE_t type, float value);
 ENVIRONMENT_DATA_t APP_ENV_DATA_MANAGE_GetValue();
 void APP_ENV_DATA_MANAGE_SetEnable(APP_ENV_SETTING_TYPE_t type);
 void APP_ENV_DATA_MANAGE_SetDisable(APP_ENV_SETTING_TYPE_t type);
+void APP_ENV_DATA_MANAGE_StopSendData();
+void APP_ENV_DATA_MANAGE_ResumeSendData();
 
 #endif
